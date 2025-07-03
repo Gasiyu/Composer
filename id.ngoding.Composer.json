@@ -23,6 +23,7 @@
         "*.a"
     ],
     "modules" : [
+        "pypi-dependencies.json",
         {
             "name" : "composer",
             "builddir" : true,
