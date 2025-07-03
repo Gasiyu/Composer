@@ -9,7 +9,19 @@
     <property name="content">
       <object class="AdwToolbarView">
         <child type="top">
-          <object class="AdwHeaderBar">
+          <object class="AdwHeaderBar" id="header_bar">
+            <property name="show-end-title-buttons">true</property>
+            <property name="show-start-title-buttons">true</property>
+            <child type="start">
+              <object class="GtkButton" id="back_button">
+                <property name="icon-name">go-previous-symbolic</property>
+                <property name="tooltip-text" translatable="yes">Back</property>
+                <property name="visible">False</property>
+                <style>
+                  <class name="flat"/>
+                </style>
+              </object>
+            </child>
             <child type="end">
               <object class="GtkMenuButton">
                 <property name="primary">True</property>
@@ -21,16 +33,14 @@
           </object>
         </child>
         <property name="content">
-          <object class="GtkLabel" id="label">
-            <property name="label" translatable="yes">Hello, World!</property>
-            <style>
-              <class name="title-1"/>
-            </style>
+          <object class="GtkStack" id="main_stack">
+            <property name="transition-type">slide-left-right</property>
           </object>
         </property>
       </object>
     </property>
   </template>
+  
   <menu id="primary_menu">
     <section>
       <item>

@@ -33,3 +33,28 @@ composer_sources = [
 ]
 
 install_data(composer_sources, install_dir: moduledir)
+
+# Install views module
+views_sources = [
+  'views/__init__.py',
+  'views/welcome_view.py',
+  'views/library_view.py',
+]
+
+install_data(views_sources, install_dir: moduledir / 'views')
+
+# Install services module
+services_sources = [
+  'services/__init__.py',
+  'services/music_scanner.py',
+]
+
+install_data(services_sources, install_dir: moduledir / 'services')
+
+# Install models module
+models_sources = [
+  'models/__init__.py',
+  'models/music_file.py',
+]
+
+install_data(models_sources, install_dir: moduledir / 'models')
