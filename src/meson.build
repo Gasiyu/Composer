@@ -19,7 +19,7 @@ conf.set('pkgdatadir', pkgdatadir)
 
 configure_file(
   input: 'composer.in',
-  output: 'composer',
+  output: 'id.ngoding.Composer',
   configuration: conf,
   install: true,
   install_dir: get_option('bindir'),

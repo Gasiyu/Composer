@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Composer
-Exec=composer
+Exec=id.ngoding.Composer
 Icon=id.ngoding.Composer
 Terminal=false
 Type=Application

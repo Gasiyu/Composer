@@ -3,7 +3,7 @@
     "runtime" : "org.gnome.Platform",
     "runtime-version" : "48",
     "sdk" : "org.gnome.Sdk",
-    "command" : "composer",
+    "command" : "id.ngoding.Composer",
     "finish-args" : [
         "--share=network",
         "--share=ipc",
