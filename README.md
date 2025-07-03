@@ -4,70 +4,74 @@
   Composer
 </h1>
 
-<p align="center">A GNOME application for finding and downloading lyrics files for your music collection.</p>
+<p align="center">A modern GNOME application for discovering and downloading lyrics for your music collection.</p>
 
-<!-- <p align="center">
+<p align="center">
   <img src ="data/screenshots/composer-dark.png" /></a>
-</p> -->
+</p>
 
-## Description
+## 📖 About
 
-Composer is a modern GTK4/Adwaita application designed to help music enthusiasts manage lyrics for their music library. It provides an intuitive interface for scanning music libraries and downloading lyrics files.
+Composer is a sleek GTK4/Adwaita application built for music lovers who want to enrich their listening experience. With its intuitive interface, you can effortlessly scan your music directories, explore track metadata, and seamlessly download lyrics file into your collection.
 
-## 🏗️ Build
+## 🎵 Features & Roadmap
 
-### Dependencies
+### ✅ Completed
+- **Directory scanning** - Discovers music files across your library.
+- **Metadata extraction** - Displays song information including artist, album, duration, and more.
 
-- Python 3.6 or higher
-- GTK 4.0
-- Meson
-- Ninja
-- [mutagen](https://github.com/quodlibet/mutagen) (Python library for audio metadata)
+### 🚧 In Development
+- **One-click lyric downloads** - Fetch lyrics for any track in your collection.
+- **Bulk processing** - Download lyrics for entire libraries in one go.
+- **Romanization** - Converts non-Latin scripts (Japanese, Korean, etc.) to readable Latin characters.
 
-### Building with Meson
+## 🏗️ Installation
 
-1. Clone the repository:
+### Quick Start with Meson
+
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/Gasiyu/Composer.git
    cd Composer
    ```
 
-2. Install Python dependencies:
+2. **Install dependencies:**
    ```bash
    pip3 install --user mutagen
    ```
 
-3. Configure and build with Meson:
+3. **Build and install:**
    ```bash
    meson build
    ninja -C build install
    ```
 
-4. Run the application:
+4. **Launch Composer:**
    ```bash
-   composer
+   id.ngoding.Composer
    ```
 
-### Building with Flatpak
+### Sandboxed Installation with Flatpak
 
-1. Install [Flatpak](https://flatpak.org/setup/) and [flatpak-builder](https://docs.flatpak.org/en/latest/flatpak-builder.html)
+1. **Set up Flatpak** (if not already installed):
+   - Install [Flatpak](https://flatpak.org/setup/) and [flatpak-builder](https://docs.flatpak.org/en/latest/flatpak-builder.html)
 
-2. Add GNOME runtime:
+2. **Add GNOME runtime:**
    ```bash
    flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
    flatpak install --user flathub org.gnome.Platform//47 org.gnome.Sdk//47
    ```
 
-3. Build and install the application:
+3. **Build and install:**
    ```bash
    flatpak-builder build id.ngoding.Composer.json --user --install --force-clean
    ```
 
-4. Run the application:
+4. **Run the application:**
    ```bash
    flatpak run id.ngoding.Composer
    ```
 
-## License
+## 📄 License
 
-This project is licensed under the GPL-3.0 License. See the `COPYING` file for details.
+This project is licensed under the [GPL-3.0 License](COPYING). See the `COPYING` file for complete terms and conditions.
