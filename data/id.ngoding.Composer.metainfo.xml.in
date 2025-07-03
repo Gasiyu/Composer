@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>id.ngoding.Composer</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Composer</name>
+  <summary>Download lyrics files for your music collection</summary>
+  <description>
+    <p>Composer is a modern GNOME/Adwaita application designed to help music enthusiasts manage lyrics for their music library. It provides an intuitive interface for scanning music directories, extracting metadata from audio files, and managing lyrics files. Currently it features:</p>
+    <ul>
+      <li>Search and download lyrics for your music files</li>
+      <li>Romanization support for non-Latin script lyrics</li>
+    </ul>
+  </description>
+
+  <developer id="id.ngoding">
+    <name>Akbar Hamaminatu</name>
+  </developer>
+
+  <url type="homepage">https://ngoding.id/projects/Composer</url>
+  <url type="vcs-browser">https://github.com/Gasiyu/Composer</url>
+  <url type="bugtracker">https://github.com/Gasiyu/Composer/issues</url>
+  <url type="translate">https://github.com/Gasiyu/Composer</url>
+  <url type="faq">https://ngoding.id/projects/Composer</url>
+  <url type="help">https://ngoding.id/projects/Composer</url>
+  <url type="donation">https://ko-fi.com/gasiyu</url>
+  <url type="contact">https://ngoding.id/about/</url>
+  <url type="contribute">https://github.com/Gasiyu/Composer</url>
+
+  <translation type="gettext">composer</translation>
+  <launchable type="desktop-id">id.ngoding.Composer.desktop</launchable>
+  <content_rating type="oars-1.1" />
+
+  <branding>
+    <color type="primary" scheme_preference="light">#ff00ff</color>
+    <color type="primary" scheme_preference="dark">#993d3d</color>
+  </branding>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://example.org/example1.png</image>
+      <caption>A caption</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://example.org/example2.png</image>
+      <caption>A caption</caption>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="0.1.0" date="2025-07-03">
+      <description>
+        <p>Initial release of Composer</p>
+        <ul>
+          <li>Basic library scanning functionality</li>
+          <li>Basic lyrics download functionality</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+</component>

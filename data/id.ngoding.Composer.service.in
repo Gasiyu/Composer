@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=id.ngoding.Composer
+Exec=@bindir@/composer --gapplication-service

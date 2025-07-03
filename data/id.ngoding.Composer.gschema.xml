@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="composer">
+	<schema id="id.ngoding.Composer" path="/id/ngoding/Composer/">
+	</schema>
+</schemalist>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Composer
+Exec=composer
+Icon=id.ngoding.Composer
+Terminal=false
+Type=Application
+Categories=Utility;Audio;Music;
+Keywords=Composer,Lyrics;
+StartupNotify=true
+DBusActivatable=true
