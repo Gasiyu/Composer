@@ -8,3 +8,4 @@ Categories=Utility;Audio;Music;
 Keywords=Composer,Lyrics;
 StartupNotify=true
 DBusActivatable=true
+Comment=Download lyrics files for your music collection
