@@ -1,3 +1,7 @@
 .flatpak-builder/
 .flatpak/
 build/
+build-dir/
+buildDir/
+.idea/
+__pycache__/
