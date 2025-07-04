@@ -117,6 +117,21 @@ class LibraryView(Gtk.Box):
         self.progress_container.set_visible(False)
         self.append(self.progress_container)
         
+        # Auto-download progress bar container (initially hidden)
+        self.auto_download_container = Adw.Clamp()
+        self.auto_download_container.set_maximum_size(1000)
+        self.auto_download_container.set_margin_start(12)
+        self.auto_download_container.set_margin_end(12)
+        self.auto_download_container.set_margin_bottom(12)
+        
+        self.auto_download_bar = Gtk.ProgressBar()
+        self.auto_download_bar.set_show_text(True)
+        self.auto_download_bar.add_css_class('osd')
+        
+        self.auto_download_container.set_child(self.auto_download_bar)
+        self.auto_download_container.set_visible(False)
+        self.append(self.auto_download_container)
+        
         # Music list container
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_hexpand(True)
@@ -432,3 +447,43 @@ class LibraryView(Gtk.Box):
         """Handle lyrics service download error signal"""
         self._set_download_button_state(music_file_path, 'error')
         self.emit('lyrics-error', music_file_path, error_message)
+    
+    def set_auto_download_state(self, is_downloading, completed=0, total=0):
+        """Update UI to show auto-download state"""
+        if is_downloading and total > 0:
+            self.auto_download_container.set_visible(True)
+            fraction = completed / total
+            self.auto_download_bar.set_fraction(fraction)
+            self.auto_download_bar.set_text(f'Auto-downloading lyrics: {completed} of {total}')
+        else:
+            self.auto_download_container.set_visible(False)
+    
+    def refresh_file_row(self, music_file_path):
+        """Refresh a specific file row to update its appearance"""
+        # Find the music file in our list
+        music_file = None
+        for file in self.music_files:
+            if file['path'] == music_file_path:
+                music_file = file
+                break
+        
+        if not music_file:
+            return
+        
+        # Find the corresponding row in the list
+        child = self.music_list.get_first_child()
+        while child:
+            if hasattr(child, 'music_file') and child.music_file['path'] == music_file_path:
+                # Update the row's appearance
+                has_lyrics = FileService.lrc_file_exists(music_file_path)
+                if has_lyrics:
+                    child.add_css_class('dim-label')
+                    child.set_opacity(0.6)
+                else:
+                    child.remove_css_class('dim-label')
+                    child.set_opacity(1.0)
+                
+                # Update download button
+                self._set_download_button_state(music_file_path, 'idle')
+                break
+            child = child.get_next_sibling()
