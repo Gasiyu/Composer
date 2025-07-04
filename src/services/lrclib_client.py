@@ -22,6 +22,7 @@ import urllib.parse
 import json
 import time
 import threading
+import re
 from typing import List, Optional
 from ..models.lyrics import LyricsResult, LyricsSource
 from .logger_service import get_logger
@@ -73,7 +74,36 @@ class LRCLibClient:
         self.logger = get_logger('lrclib_client')
         self.logger.info("LRCLib client initialized")
     
-    def search_lyrics(self, title: str, artist: str, album: str = "", duration: int = 0) -> List[LyricsResult]:
+    def _has_non_latin_chars(self, text: str) -> bool:
+        """
+        Check if text contains non-Latin characters
+        
+        Args:
+            text: Text to check
+        
+        Returns:
+            True if text contains non-Latin characters, False otherwise
+        """
+        # Check for characters outside the basic Latin and Latin-1 supplement ranges
+        for char in text:
+            if ord(char) > 255:  # Beyond Latin-1 supplement
+                return True
+        return False
+    
+    def _has_parentheses_content(self, text: str) -> bool:
+        """
+        Check if text has content in parentheses
+        
+        Args:
+            text: Text to check
+        
+        Returns:
+            True if text has parentheses with content, False otherwise
+        """
+        return bool(re.search(r'\(.+\)', text))
+        
+    def search_lyrics(self, title: str, artist: str, album: str = "", duration: int = 0, 
+                     try_latin: bool = True) -> List[LyricsResult]:
         """
         Search for lyrics using LRCLib API
         
@@ -82,6 +112,7 @@ class LRCLibClient:
             artist: Artist name
             album: Album name (optional)
             duration: Song duration in seconds (optional)
+            try_latin: Whether to try with Latin names if original search fails
         
         Returns:
             List of LyricsResult objects
@@ -112,6 +143,27 @@ class LRCLibClient:
                 if response.status == 200:
                     data = json.loads(response.read().decode('utf-8'))
                     results = self._parse_search_results(data, title, artist, album, duration)
+                    
+                    # If no results and try_latin is True, try with Latin names
+                    if not results and try_latin:
+                        # Check if artist or title contains non-Latin chars and has parentheses
+                        title_has_non_latin = self._has_non_latin_chars(title)
+                        artist_has_non_latin = self._has_non_latin_chars(artist)
+                        title_has_parentheses = self._has_parentheses_content(title)
+                        artist_has_parentheses = self._has_parentheses_content(artist)
+                        
+                        should_try_latin = ((title_has_non_latin and title_has_parentheses) or 
+                                          (artist_has_non_latin and artist_has_parentheses))
+                        
+                        if should_try_latin:
+                            latin_title = self._extract_latin_name(title) if title_has_non_latin and title_has_parentheses else title
+                            latin_artist = self._extract_latin_name(artist) if artist_has_non_latin and artist_has_parentheses else artist
+                            latin_album = self._extract_latin_name(album) if album and self._has_non_latin_chars(album) and self._has_parentheses_content(album) else album
+                            
+                            self.logger.info(f"No results found with original names. Trying with Latin names: '{latin_title}' by '{latin_artist}'")
+                            # Recursive call with Latin names, but don't try Latin again to avoid infinite recursion
+                            return self.search_lyrics(latin_title, latin_artist, latin_album, duration, try_latin=False)
+                    
                     self.logger.info(f"Found {len(results)} lyrics results for '{title}' by '{artist}'")
                     return results
                 else:
@@ -222,3 +274,22 @@ class LRCLibClient:
         except Exception as e:
             self.logger.error(f"LRCLib API connection test failed: {e}")
             return False
+    
+    def _extract_latin_name(self, name: str) -> str:
+        """
+        Extract Latin name from parentheses if available
+        
+        Args:
+            name: Artist or title name with possible Latin name in parentheses
+        
+        Returns:
+            Extracted Latin name or original name if no Latin name found
+        """
+        match = re.search(r'\((.*?)\)', name)
+        if match:
+            latin_name = match.group(1).strip()
+            self.logger.debug(f"Extracted Latin name: {latin_name} from {name}")
+            return latin_name
+        else:
+            self.logger.debug(f"No Latin name found in: {name}")
+            return name
