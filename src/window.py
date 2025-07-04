@@ -17,9 +17,10 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, Gtk, Gio
 from .views.welcome_view import WelcomeView
 from .views.library_view import LibraryView
+from .views.preferences_dialog import PreferencesDialog
 from .services.music_scanner import MusicScanner
 
 @Gtk.Template(resource_path='/id/ngoding/Composer/window.ui')
@@ -40,11 +41,26 @@ class ComposerWindow(Adw.ApplicationWindow):
         # Initialize music scanner
         self.music_scanner = MusicScanner()
         
+        # Setup actions
+        self._setup_actions()
+        
         # Connect signals
         self._connect_signals()
         
         # Add views to stack
         self._setup_views()
+    
+    def _setup_actions(self):
+        """Setup window actions"""
+        # Preferences action
+        preferences_action = Gio.SimpleAction.new("preferences", None)
+        preferences_action.connect("activate", self._on_preferences_action)
+        self.add_action(preferences_action)
+    
+    def _on_preferences_action(self, action, param):
+        """Handle preferences action"""
+        dialog = PreferencesDialog()
+        dialog.present(self)
     
     def _setup_views(self):
         """Setup and add views to the stack"""
@@ -67,6 +83,8 @@ class ComposerWindow(Adw.ApplicationWindow):
         
         # Library view signals
         self.library_view.connect('directory-selected', self._on_directory_selected)
+        self.library_view.connect('lyrics-downloaded', self._on_lyrics_downloaded)
+        self.library_view.connect('lyrics-error', self._on_lyrics_error)
         
         # Music scanner signals
         self.music_scanner.connect('scan-started', self._on_scan_started)
@@ -121,3 +139,13 @@ class ComposerWindow(Adw.ApplicationWindow):
         print(f"Scan error: {error_message}")
         self.library_view.set_scanning_state(False)
         self.library_view.subtitle_label.set_text(f"Error scanning directory: {error_message}")
+    
+    def _on_lyrics_downloaded(self, library_view, music_file_path, lrc_path):
+        """Handle successful lyrics download"""
+        print(f"Lyrics downloaded for {music_file_path}: {lrc_path}")
+        # TODO: Show toast notification
+    
+    def _on_lyrics_error(self, library_view, music_file_path, error_message):
+        """Handle lyrics download error"""
+        print(f"Lyrics error for {music_file_path}: {error_message}")
+        # TODO: Show toast notification

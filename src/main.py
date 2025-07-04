@@ -25,6 +25,8 @@ gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Gio, Adw
 from .window import ComposerWindow
+from .views.preferences_dialog import PreferencesDialog
+from .services.logger_service import LoggerService, get_logger
 
 
 class ComposerApplication(Adw.Application):
@@ -34,6 +36,14 @@ class ComposerApplication(Adw.Application):
         super().__init__(application_id='id.ngoding.Composer',
                          flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
                          resource_base_path='/id/ngoding/Composer')
+        
+        # Initialize logging system
+        self.logger_service = LoggerService()
+        self.logger = get_logger('main')
+        self.logger_service.log_startup_info()
+        self.logger_service.print_log_location()
+        self.logger.info("ComposerApplication initializing")
+        
         self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
         self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action)
@@ -44,13 +54,18 @@ class ComposerApplication(Adw.Application):
         We raise the application's main window, creating it if
         necessary.
         """
+        self.logger.info("Application activation requested")
         win = self.props.active_window
         if not win:
+            self.logger.info("Creating new main window")
             win = ComposerWindow(application=self)
+        else:
+            self.logger.info("Presenting existing window")
         win.present()
 
     def on_about_action(self, *args):
         """Callback for the app.about action."""
+        self.logger.info("About dialog requested")
         about = Adw.AboutDialog(application_name='composer',
                                 application_icon='id.ngoding.Composer',
                                 developer_name='Akbar Hamaminatu',
@@ -63,7 +78,9 @@ class ComposerApplication(Adw.Application):
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
-        print('app.preferences action activated')
+        self.logger.info("Preferences dialog requested")
+        dialog = PreferencesDialog()
+        dialog.present(self.props.active_window)
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.
@@ -84,4 +101,13 @@ class ComposerApplication(Adw.Application):
 def main(version):
     """The application's entry point."""
     app = ComposerApplication()
-    return app.run(sys.argv)
+    try:
+        return app.run(sys.argv)
+    except KeyboardInterrupt:
+        app.logger.info("Application interrupted by user")
+        return 0
+    except Exception as e:
+        app.logger.exception("Unhandled exception in main")
+        return 1
+    finally:
+        app.logger_service.log_shutdown_info()

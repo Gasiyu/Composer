@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="composer">
 	<schema id="id.ngoding.Composer" path="/id/ngoding/Composer/">
+		<key name="lyrics-sources-priority" type="as">
+			<default>["lrclib"]</default>
+			<summary>Priority order of lyrics sources</summary>
+			<description>The order in which lyrics sources should be searched</description>
+		</key>
+		<key name="auto-download-lyrics" type="b">
+			<default>false</default>
+			<summary>Automatically download lyrics when scanning</summary>
+			<description>Whether to automatically download lyrics when scanning music files</description>
+		</key>
+		<key name="overwrite-existing-lyrics" type="b">
+			<default>false</default>
+			<summary>Overwrite existing lyrics files</summary>
+			<description>Whether to overwrite existing lyrics files when downloading</description>
+		</key>
+		<key name="lyrics-language" type="s">
+			<default>"en"</default>
+			<summary>Preferred lyrics language</summary>
+			<description>Preferred language for lyrics downloads</description>
+		</key>
 	</schema>
 </schemalist>

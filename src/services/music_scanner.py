@@ -22,6 +22,7 @@ import threading
 from pathlib import Path
 from gi.repository import Gio, GLib, GdkPixbuf, GObject
 import mutagen
+from .logger_service import get_logger
 
 class MusicScanner(GObject.Object):
     """Service for scanning music directories and extracting metadata"""
@@ -38,14 +39,18 @@ class MusicScanner(GObject.Object):
         super().__init__()
         self.supported_formats = {'.mp3', '.flac', '.ogg', '.m4a', '.mp4', '.wav', '.wma', '.opus'}
         self._cancel_requested = False
+        self.logger = get_logger('music_scanner')
+        self.logger.info("Music scanner initialized")
     
     def scan_directory_async(self, directory_path):
         """Start scanning directory in background thread"""
+        self.logger.info(f"Starting directory scan: {directory_path}")
         self._cancel_requested = False
         threading.Thread(target=self._scan_thread, args=(directory_path,), daemon=True).start()
     
     def cancel_scan(self):
         """Cancel ongoing scan"""
+        self.logger.info("Scan cancellation requested")
         self._cancel_requested = True
     
     def _scan_thread(self, directory_path):

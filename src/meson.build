@@ -39,6 +39,8 @@ views_sources = [
   'views/__init__.py',
   'views/welcome_view.py',
   'views/library_view.py',
+  'views/lyrics_selection_dialog.py',
+  'views/preferences_dialog.py',
 ]
 
 install_data(views_sources, install_dir: moduledir / 'views')
@@ -47,6 +49,11 @@ install_data(views_sources, install_dir: moduledir / 'views')
 services_sources = [
   'services/__init__.py',
   'services/music_scanner.py',
+  'services/lyrics_service.py',
+  'services/lrclib_client.py',
+  'services/settings_service.py',
+  'services/file_service.py',
+  'services/logger_service.py',
 ]
 
 install_data(services_sources, install_dir: moduledir / 'services')
@@ -55,6 +62,7 @@ install_data(services_sources, install_dir: moduledir / 'services')
 models_sources = [
   'models/__init__.py',
   'models/music_file.py',
+  'models/lyrics.py',
 ]
 
 install_data(models_sources, install_dir: moduledir / 'models')
