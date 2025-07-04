@@ -142,6 +142,111 @@ class SettingsService(GObject.Object):
         except Exception as e:
             print(f"Error setting lyrics-language: {e}")
     
+    def get_enable_romanization(self) -> bool:
+        """Get whether romanization is enabled"""
+        if not self.settings:
+            return False
+        
+        try:
+            return self.settings.get_boolean('enable-romanization')
+        except Exception as e:
+            print(f"Error reading enable-romanization setting: {e}")
+            return False
+    
+    def set_enable_romanization(self, enabled: bool):
+        """Set whether romanization is enabled"""
+        if not self.settings:
+            return
+        
+        try:
+            self.settings.set_boolean('enable-romanization', enabled)
+        except Exception as e:
+            print(f"Error setting enable-romanization: {e}")
+    
+    def get_romanize_chinese(self) -> bool:
+        """Get whether to romanize Chinese lyrics"""
+        if not self.settings:
+            return True
+        
+        try:
+            return self.settings.get_boolean('romanize-chinese')
+        except Exception as e:
+            print(f"Error reading romanize-chinese setting: {e}")
+            return True
+    
+    def set_romanize_chinese(self, enabled: bool):
+        """Set whether to romanize Chinese lyrics"""
+        if not self.settings:
+            return
+        
+        try:
+            self.settings.set_boolean('romanize-chinese', enabled)
+        except Exception as e:
+            print(f"Error setting romanize-chinese: {e}")
+    
+    def get_romanize_japanese(self) -> bool:
+        """Get whether to romanize Japanese lyrics"""
+        if not self.settings:
+            return True
+        
+        try:
+            return self.settings.get_boolean('romanize-japanese')
+        except Exception as e:
+            print(f"Error reading romanize-japanese setting: {e}")
+            return True
+    
+    def set_romanize_japanese(self, enabled: bool):
+        """Set whether to romanize Japanese lyrics"""
+        if not self.settings:
+            return
+        
+        try:
+            self.settings.set_boolean('romanize-japanese', enabled)
+        except Exception as e:
+            print(f"Error setting romanize-japanese: {e}")
+    
+    def get_romanize_korean(self) -> bool:
+        """Get whether to romanize Korean lyrics"""
+        if not self.settings:
+            return True
+        
+        try:
+            return self.settings.get_boolean('romanize-korean')
+        except Exception as e:
+            print(f"Error reading romanize-korean setting: {e}")
+            return True
+    
+    def set_romanize_korean(self, enabled: bool):
+        """Set whether to romanize Korean lyrics"""
+        if not self.settings:
+            return
+        
+        try:
+            self.settings.set_boolean('romanize-korean', enabled)
+        except Exception as e:
+            print(f"Error setting romanize-korean: {e}")
+    
+    def get_romanization_mode(self) -> str:
+        """Get romanization mode ('replace' or 'multiline')"""
+        if not self.settings:
+            return "replace"
+        
+        try:
+            return self.settings.get_string('romanization-mode')
+        except Exception as e:
+            print(f"Error reading romanization-mode setting: {e}")
+            return "replace"
+    
+    def set_romanization_mode(self, mode: str):
+        """Set romanization mode ('replace' or 'multiline')"""
+        if not self.settings:
+            return
+        
+        try:
+            self.settings.set_string('romanization-mode', mode)
+        except Exception as e:
+            print(f"Error setting romanization-mode: {e}")
+
     def reset_to_defaults(self):
         """Reset all lyrics-related settings to their defaults"""
         if not self.settings:
@@ -152,6 +257,11 @@ class SettingsService(GObject.Object):
             self.settings.reset('auto-download-lyrics')
             self.settings.reset('overwrite-existing-lyrics')
             self.settings.reset('lyrics-language')
+            self.settings.reset('enable-romanization')
+            self.settings.reset('romanize-chinese')
+            self.settings.reset('romanize-japanese')
+            self.settings.reset('romanize-korean')
+            self.settings.reset('romanization-mode')
         except Exception as e:
             print(f"Error resetting settings: {e}")
     

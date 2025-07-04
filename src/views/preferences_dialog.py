@@ -114,6 +114,60 @@ class PreferencesDialog(Adw.PreferencesDialog):
         sources_group.add(sources_row)
         lyrics_page.add(sources_group)
         
+        # Romanization group
+        romanization_group = Adw.PreferencesGroup()
+        romanization_group.set_title("Romanization")
+        romanization_group.set_description("Convert non-Latin scripts to readable Latin characters")
+        
+        # Enable romanization switch
+        enable_romanization_row = Adw.SwitchRow()
+        enable_romanization_row.set_title("Enable romanization")
+        enable_romanization_row.set_subtitle("Convert Chinese, Japanese, and Korean lyrics to Latin script")
+        enable_romanization_row.set_active(self.settings_service.get_enable_romanization())
+        enable_romanization_row.connect('notify::active', self._on_enable_romanization_changed)
+        romanization_group.add(enable_romanization_row)
+        
+        # Language-specific romanization options
+        chinese_row = Adw.SwitchRow()
+        chinese_row.set_title("Romanize Chinese")
+        chinese_row.set_subtitle("Convert Chinese characters to Pinyin")
+        chinese_row.set_active(self.settings_service.get_romanize_chinese())
+        chinese_row.connect('notify::active', self._on_romanize_chinese_changed)
+        romanization_group.add(chinese_row)
+        
+        japanese_row = Adw.SwitchRow()
+        japanese_row.set_title("Romanize Japanese")
+        japanese_row.set_subtitle("Convert Japanese characters to Romaji")
+        japanese_row.set_active(self.settings_service.get_romanize_japanese())
+        japanese_row.connect('notify::active', self._on_romanize_japanese_changed)
+        romanization_group.add(japanese_row)
+        
+        korean_row = Adw.SwitchRow()
+        korean_row.set_title("Romanize Korean")
+        korean_row.set_subtitle("Convert Korean characters to Latin script")
+        korean_row.set_active(self.settings_service.get_romanize_korean())
+        korean_row.connect('notify::active', self._on_romanize_korean_changed)
+        romanization_group.add(korean_row)
+        
+        # Romanization mode
+        mode_row = Adw.ComboRow()
+        mode_row.set_title("Romanization mode")
+        mode_row.set_subtitle("How to display romanized lyrics")
+        
+        mode_model = Gtk.StringList()
+        mode_model.append("Replace original")
+        mode_model.append("Multi-line (original + romanized)")
+        
+        mode_row.set_model(mode_model)
+        
+        # Set current mode
+        current_mode = self.settings_service.get_romanization_mode()
+        mode_row.set_selected(0 if current_mode == "replace" else 1)
+        mode_row.connect('notify::selected', self._on_romanization_mode_changed)
+        romanization_group.add(mode_row)
+        
+        lyrics_page.add(romanization_group)
+        
         # Advanced settings group
         advanced_group = Adw.PreferencesGroup()
         advanced_group.set_title("Advanced")
@@ -150,6 +204,28 @@ class PreferencesDialog(Adw.PreferencesDialog):
         if selected < len(language_codes):
             self.settings_service.set_lyrics_language(language_codes[selected])
     
+    def _on_enable_romanization_changed(self, switch, param):
+        """Handle enable romanization setting change"""
+        self.settings_service.set_enable_romanization(switch.get_active())
+    
+    def _on_romanize_chinese_changed(self, switch, param):
+        """Handle romanize Chinese setting change"""
+        self.settings_service.set_romanize_chinese(switch.get_active())
+    
+    def _on_romanize_japanese_changed(self, switch, param):
+        """Handle romanize Japanese setting change"""
+        self.settings_service.set_romanize_japanese(switch.get_active())
+    
+    def _on_romanize_korean_changed(self, switch, param):
+        """Handle romanize Korean setting change"""
+        self.settings_service.set_romanize_korean(switch.get_active())
+    
+    def _on_romanization_mode_changed(self, combo, param):
+        """Handle romanization mode setting change"""
+        selected = combo.get_selected()
+        mode = "replace" if selected == 0 else "multiline"
+        self.settings_service.set_romanization_mode(mode)
+
     def _on_reset_clicked(self, button):
         """Handle reset to defaults button click"""
         # Show confirmation dialog

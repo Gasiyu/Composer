@@ -54,6 +54,7 @@ services_sources = [
   'services/settings_service.py',
   'services/file_service.py',
   'services/logger_service.py',
+  'services/romanization_service.py',
 ]
 
 install_data(services_sources, install_dir: moduledir / 'services')

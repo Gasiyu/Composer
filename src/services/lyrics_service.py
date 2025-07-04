@@ -24,7 +24,8 @@ from ..models.lyrics import LyricsResult, LyricsSource
 from .lrclib_client import LRCLibClient
 from .file_service import FileService
 from .logger_service import get_logger
-from .logger_service import get_logger
+from .romanization_service import RomanizationService
+from .settings_service import SettingsService
 
 class LyricsService(GObject.Object):
     """Service for managing lyrics search and retrieval"""
@@ -46,6 +47,8 @@ class LyricsService(GObject.Object):
         self.source_priority = [LyricsSource.LRCLIB]  # Will be configurable via settings
         self._current_searches = {}  # Track ongoing searches
         self.logger = get_logger('lyrics_service')
+        self.romanization_service = RomanizationService()
+        self.settings_service = SettingsService()
         self.logger.info("Lyrics service initialized")
     
     def search_lyrics_async(self, title: str, artist: str, album: str = "", duration: int = 0,
@@ -165,8 +168,18 @@ class LyricsService(GObject.Object):
             lrc_file_path = FileService.get_lrc_file_path(music_file_path)
             self.logger.debug(f"Target LRC file path: {lrc_file_path}")
             
-            # Convert to LRC format
-            lrc_content = lyrics_result.to_lrc_format()
+            # Convert to LRC format with romanization if enabled
+            romanization_service = None
+            if self.settings_service.get_enable_romanization():
+                romanization_service = self.romanization_service
+            
+            lrc_content = lyrics_result.to_lrc_format(
+                romanization_service=romanization_service,
+                romanize_chinese=self.settings_service.get_romanize_chinese(),
+                romanize_japanese=self.settings_service.get_romanize_japanese(),
+                romanize_korean=self.settings_service.get_romanize_korean(),
+                romanization_mode=self.settings_service.get_romanization_mode()
+            )
             
             # Save to file using FileService
             success = FileService.write_lrc_file(lrc_file_path, lrc_content, create_backup=True)

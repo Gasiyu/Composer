@@ -122,16 +122,32 @@ class LyricsResult(GObject.Object):
         
         return len(intersection) / len(union)
     
-    def to_lrc_format(self):
+    def to_lrc_format(self, romanization_service=None, romanize_chinese=True, 
+                      romanize_japanese=True, romanize_korean=True, romanization_mode="replace"):
         """Return lyrics in LRC format, preferring synced lyrics over plain"""
+        lyrics_content = ""
+        
         if self.has_synced_lyrics():
             # Already in LRC format, return as-is
-            return self.synced_lyrics
+            lyrics_content = self.synced_lyrics
         elif self.has_lyrics():
             # Save plain lyrics directly without timing estimation
-            return self.plain_lyrics
+            lyrics_content = self.plain_lyrics
         else:
             return ""
+        
+        # Apply romanization if service is provided
+        if romanization_service:
+            try:
+                lyrics_content = romanization_service.romanize_lyrics(
+                    lyrics_content, romanization_mode, romanize_chinese, 
+                    romanize_japanese, romanize_korean
+                )
+            except Exception as e:
+                # Log error but don't fail - return original lyrics
+                print(f"Romanization failed: {e}")
+        
+        return lyrics_content
     
     def _ms_to_lrc_time(self, milliseconds):
         """Convert milliseconds to LRC time format (mm:ss.xx)"""

@@ -21,5 +21,30 @@
 			<summary>Preferred lyrics language</summary>
 			<description>Preferred language for lyrics downloads</description>
 		</key>
+		<key name="enable-romanization" type="b">
+			<default>false</default>
+			<summary>Enable lyrics romanization</summary>
+			<description>Whether to romanize non-Latin script lyrics</description>
+		</key>
+		<key name="romanize-chinese" type="b">
+			<default>true</default>
+			<summary>Romanize Chinese lyrics</summary>
+			<description>Whether to romanize Chinese lyrics to Pinyin</description>
+		</key>
+		<key name="romanize-japanese" type="b">
+			<default>true</default>
+			<summary>Romanize Japanese lyrics</summary>
+			<description>Whether to romanize Japanese lyrics to Romaji</description>
+		</key>
+		<key name="romanize-korean" type="b">
+			<default>true</default>
+			<summary>Romanize Korean lyrics</summary>
+			<description>Whether to romanize Korean lyrics to Latin script</description>
+		</key>
+		<key name="romanization-mode" type="s">
+			<default>"replace"</default>
+			<summary>Romanization mode</summary>
+			<description>How to display romanized lyrics: 'replace' or 'multiline'</description>
+		</key>
 	</schema>
 </schemalist>
