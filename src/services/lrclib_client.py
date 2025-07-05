@@ -164,7 +164,7 @@ class LRCLibClient:
                             # Recursive call with Latin names, but don't try Latin again to avoid infinite recursion
                             return self.search_lyrics(latin_title, latin_artist, latin_album, duration, try_latin=False)
                     
-                    self.logger.info(f"Found {len(results)} lyrics results for '{title}' by '{artist}'")
+                    self.logger.debug(f"Found {len(results)} lyrics results for '{title}' by '{artist}' from LRCLib")
                     return results
                 else:
                     self.logger.warning(f"LRCLib API error: HTTP {response.status}")

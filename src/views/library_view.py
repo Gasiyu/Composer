@@ -167,7 +167,7 @@ class LibraryView(Gtk.Box):
                     folder_path = folder.get_path()
                     self.emit('directory-selected', folder_path)
             except Exception as e:
-                print(f"Error selecting folder: {e}")
+                self.logger.error(f"Error selecting folder: {e}")
         
         # Get the toplevel window
         toplevel = self.get_root()
@@ -441,7 +441,7 @@ class LibraryView(Gtk.Box):
     
     def _on_lyrics_search_error(self, service, error_message):
         """Handle lyrics service search error signal"""
-        print(f"Lyrics search error: {error_message}")
+        self.logger.error(f"Lyrics search error: {error_message}")
         # TODO: Update UI to show error state
     
     def _on_lyrics_download_completed(self, service, music_file_path, lrc_path):

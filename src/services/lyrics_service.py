@@ -180,7 +180,7 @@ class LyricsService(GObject.Object):
                 if lrc_success:
                     success = True
                     saved_paths.append(lrc_file_path)
-                    self.logger.info(f"Successfully saved lyrics to LRC file: {lrc_file_path}")
+                    # FileService already logs the successful write
                 else:
                     self.logger.error(f"Failed to write LRC file: {lrc_file_path}")
             
@@ -190,7 +190,7 @@ class LyricsService(GObject.Object):
                 if metadata_success:
                     success = True
                     saved_paths.append(f"{music_file_path} (metadata)")
-                    self.logger.info(f"Successfully saved lyrics to metadata: {music_file_path}")
+                    # _save_lyrics_to_metadata already logs the successful save
                 else:
                     self.logger.error(f"Failed to write lyrics to metadata: {music_file_path}")
             
@@ -251,7 +251,7 @@ class LyricsService(GObject.Object):
             
             # Save the changes
             audiofile.save()
-            self.logger.debug(f"Successfully saved lyrics to metadata: {music_file_path}")
+            self.logger.info(f"Successfully saved lyrics to metadata: {music_file_path}")
             return True
             
         except Exception as e:

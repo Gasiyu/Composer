@@ -124,7 +124,7 @@ class MusicScanner(GObject.Object):
                 'album_art': album_art
             }
         except Exception as e:
-            print(f"Error extracting metadata from {file_path}: {e}")
+            self.logger.error(f"Error extracting metadata from {file_path}: {e}")
             return None
     
     def _get_tag(self, audio_file, tag_names):
@@ -184,6 +184,6 @@ class MusicScanner(GObject.Object):
                 )
                 return pixbuf
         except Exception as e:
-            print(f"Error extracting album art: {e}")
+            self.logger.error(f"Error extracting album art: {e}")
         
         return None

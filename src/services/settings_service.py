@@ -20,6 +20,7 @@
 from gi.repository import Gio, GObject
 from typing import List
 from ..models.lyrics import LyricsSource
+from .logger_service import get_logger
 
 class SettingsService(GObject.Object):
     """Service for managing application settings"""
@@ -32,11 +33,12 @@ class SettingsService(GObject.Object):
     
     def __init__(self, schema_id: str = "id.ngoding.Composer"):
         super().__init__()
+        self.logger = get_logger('settings_service')
         try:
             self.settings = Gio.Settings.new(schema_id)
             self.settings.connect('changed', self._on_settings_changed)
         except Exception as e:
-            print(f"Warning: Could not load settings schema {schema_id}: {e}")
+            self.logger.warning(f"Could not load settings schema {schema_id}: {e}")
             self.settings = None
     
     def _on_settings_changed(self, settings, key):
@@ -57,7 +59,7 @@ class SettingsService(GObject.Object):
                     source = LyricsSource(source_str)
                     sources.append(source)
                 except ValueError:
-                    print(f"Unknown lyrics source in settings: {source_str}")
+                    self.logger.warning(f"Unknown lyrics source in settings: {source_str}")
             
             # Fallback to default if no valid sources
             if not sources:
@@ -65,7 +67,7 @@ class SettingsService(GObject.Object):
             
             return sources
         except Exception as e:
-            print(f"Error reading lyrics sources priority: {e}")
+            self.logger.error(f"Error reading lyrics sources priority: {e}")
             return [LyricsSource.LRCLIB]
     
     def set_lyrics_sources_priority(self, sources: List[LyricsSource]):
@@ -77,7 +79,7 @@ class SettingsService(GObject.Object):
             source_strings = [source.value for source in sources]
             self.settings.set_strv('lyrics-sources-priority', source_strings)
         except Exception as e:
-            print(f"Error setting lyrics sources priority: {e}")
+            self.logger.error(f"Error setting lyrics sources priority: {e}")
     
     def get_auto_download_lyrics(self) -> bool:
         """Get whether to automatically download lyrics when scanning"""
@@ -87,7 +89,7 @@ class SettingsService(GObject.Object):
         try:
             return self.settings.get_boolean('auto-download-lyrics')
         except Exception as e:
-            print(f"Error reading auto-download-lyrics setting: {e}")
+            self.logger.error(f"Error reading auto-download-lyrics setting: {e}")
             return False
     
     def set_auto_download_lyrics(self, enabled: bool):
@@ -98,7 +100,7 @@ class SettingsService(GObject.Object):
         try:
             self.settings.set_boolean('auto-download-lyrics', enabled)
         except Exception as e:
-            print(f"Error setting auto-download-lyrics: {e}")
+            self.logger.error(f"Error setting auto-download-lyrics: {e}")
     
     def get_overwrite_existing_lyrics(self) -> bool:
         """Get whether to overwrite existing lyrics files"""
@@ -108,7 +110,7 @@ class SettingsService(GObject.Object):
         try:
             return self.settings.get_boolean('overwrite-existing-lyrics')
         except Exception as e:
-            print(f"Error reading overwrite-existing-lyrics setting: {e}")
+            self.logger.error(f"Error reading overwrite-existing-lyrics setting: {e}")
             return False
     
     def set_overwrite_existing_lyrics(self, enabled: bool):
@@ -119,7 +121,7 @@ class SettingsService(GObject.Object):
         try:
             self.settings.set_boolean('overwrite-existing-lyrics', enabled)
         except Exception as e:
-            print(f"Error setting overwrite-existing-lyrics: {e}")
+            self.logger.error(f"Error setting overwrite-existing-lyrics: {e}")
     
     def get_lyrics_language(self) -> str:
         """Get preferred lyrics language"""
@@ -129,7 +131,7 @@ class SettingsService(GObject.Object):
         try:
             return self.settings.get_string('lyrics-language')
         except Exception as e:
-            print(f"Error reading lyrics-language setting: {e}")
+            self.logger.error(f"Error reading lyrics-language setting: {e}")
             return "en"
     
     def set_lyrics_language(self, language: str):
@@ -140,7 +142,7 @@ class SettingsService(GObject.Object):
         try:
             self.settings.set_string('lyrics-language', language)
         except Exception as e:
-            print(f"Error setting lyrics-language: {e}")
+            self.logger.error(f"Error setting lyrics-language: {e}")
     
     def get_lyrics_storage_method(self) -> str:
         """Get preferred lyrics storage method"""
@@ -150,7 +152,7 @@ class SettingsService(GObject.Object):
         try:
             return self.settings.get_string('lyrics-storage-method')
         except Exception as e:
-            print(f"Error reading lyrics-storage-method setting: {e}")
+            self.logger.error(f"Error reading lyrics-storage-method setting: {e}")
             return "lrc"
     
     def set_lyrics_storage_method(self, method: str):
@@ -161,7 +163,7 @@ class SettingsService(GObject.Object):
         try:
             self.settings.set_string('lyrics-storage-method', method)
         except Exception as e:
-            print(f"Error setting lyrics-storage-method: {e}")
+            self.logger.error(f"Error setting lyrics-storage-method: {e}")
     
     def get_enable_romanization(self) -> bool:
         """Get whether romanization is enabled"""
@@ -171,7 +173,7 @@ class SettingsService(GObject.Object):
         try:
             return self.settings.get_boolean('enable-romanization')
         except Exception as e:
-            print(f"Error reading enable-romanization setting: {e}")
+            self.logger.error(f"Error reading enable-romanization setting: {e}")
             return False
     
     def set_enable_romanization(self, enabled: bool):
@@ -182,7 +184,7 @@ class SettingsService(GObject.Object):
         try:
             self.settings.set_boolean('enable-romanization', enabled)
         except Exception as e:
-            print(f"Error setting enable-romanization: {e}")
+            self.logger.error(f"Error setting enable-romanization: {e}")
     
     def get_romanize_chinese(self) -> bool:
         """Get whether to romanize Chinese lyrics"""
@@ -192,7 +194,7 @@ class SettingsService(GObject.Object):
         try:
             return self.settings.get_boolean('romanize-chinese')
         except Exception as e:
-            print(f"Error reading romanize-chinese setting: {e}")
+            self.logger.error(f"Error reading romanize-chinese setting: {e}")
             return True
     
     def set_romanize_chinese(self, enabled: bool):
@@ -203,7 +205,7 @@ class SettingsService(GObject.Object):
         try:
             self.settings.set_boolean('romanize-chinese', enabled)
         except Exception as e:
-            print(f"Error setting romanize-chinese: {e}")
+            self.logger.error(f"Error setting romanize-chinese: {e}")
     
     def get_romanize_japanese(self) -> bool:
         """Get whether to romanize Japanese lyrics"""
@@ -213,7 +215,7 @@ class SettingsService(GObject.Object):
         try:
             return self.settings.get_boolean('romanize-japanese')
         except Exception as e:
-            print(f"Error reading romanize-japanese setting: {e}")
+            self.logger.error(f"Error reading romanize-japanese setting: {e}")
             return True
     
     def set_romanize_japanese(self, enabled: bool):
@@ -224,7 +226,7 @@ class SettingsService(GObject.Object):
         try:
             self.settings.set_boolean('romanize-japanese', enabled)
         except Exception as e:
-            print(f"Error setting romanize-japanese: {e}")
+            self.logger.error(f"Error setting romanize-japanese: {e}")
     
     def get_romanize_korean(self) -> bool:
         """Get whether to romanize Korean lyrics"""
@@ -234,7 +236,7 @@ class SettingsService(GObject.Object):
         try:
             return self.settings.get_boolean('romanize-korean')
         except Exception as e:
-            print(f"Error reading romanize-korean setting: {e}")
+            self.logger.error(f"Error reading romanize-korean setting: {e}")
             return True
     
     def set_romanize_korean(self, enabled: bool):
@@ -245,7 +247,7 @@ class SettingsService(GObject.Object):
         try:
             self.settings.set_boolean('romanize-korean', enabled)
         except Exception as e:
-            print(f"Error setting romanize-korean: {e}")
+            self.logger.error(f"Error setting romanize-korean: {e}")
     
     def get_romanization_mode(self) -> str:
         """Get romanization mode ('replace' or 'multiline')"""
@@ -255,7 +257,7 @@ class SettingsService(GObject.Object):
         try:
             return self.settings.get_string('romanization-mode')
         except Exception as e:
-            print(f"Error reading romanization-mode setting: {e}")
+            self.logger.error(f"Error reading romanization-mode setting: {e}")
             return "replace"
     
     def set_romanization_mode(self, mode: str):
@@ -266,7 +268,7 @@ class SettingsService(GObject.Object):
         try:
             self.settings.set_string('romanization-mode', mode)
         except Exception as e:
-            print(f"Error setting romanization-mode: {e}")
+            self.logger.error(f"Error setting romanization-mode: {e}")
 
     def reset_to_defaults(self):
         """Reset all lyrics-related settings to their defaults"""
@@ -285,7 +287,7 @@ class SettingsService(GObject.Object):
             self.settings.reset('romanize-korean')
             self.settings.reset('romanization-mode')
         except Exception as e:
-            print(f"Error resetting settings: {e}")
+            self.logger.error(f"Error resetting settings: {e}")
     
     def has_settings(self) -> bool:
         """Check if settings are available"""

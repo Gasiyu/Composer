@@ -20,6 +20,7 @@
 from gi.repository import GObject
 from enum import Enum
 import re
+from ..services.logger_service import get_logger
 
 class LyricsSource(Enum):
     """Enumeration of lyrics sources"""
@@ -34,6 +35,7 @@ class LyricsResult(GObject.Object):
     def __init__(self, id=None, title="", artist="", album="", duration=0, 
                  plain_lyrics="", synced_lyrics="", source=LyricsSource.LRCLIB):
         super().__init__()
+        self.logger = get_logger('lyrics_result')
         self.id = id
         self.title = title
         self.artist = artist
@@ -145,7 +147,7 @@ class LyricsResult(GObject.Object):
                 )
             except Exception as e:
                 # Log error but don't fail - return original lyrics
-                print(f"Romanization failed: {e}")
+                self.logger.error(f"Romanization failed: {e}")
         
         return lyrics_content
     

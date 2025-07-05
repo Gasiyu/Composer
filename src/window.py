@@ -25,6 +25,7 @@ from .services.music_scanner import MusicScanner
 from .services.lyrics_service import LyricsService
 from .services.settings_service import SettingsService
 from .services.file_service import FileService
+from .services.logger_service import get_logger
 
 @Gtk.Template(resource_path='/id/ngoding/Composer/window.ui')
 class ComposerWindow(Adw.ApplicationWindow):
@@ -36,6 +37,9 @@ class ComposerWindow(Adw.ApplicationWindow):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        
+        # Initialize logger
+        self.logger = get_logger('window')
         
         # Initialize views
         self.welcome_view = WelcomeView()
@@ -176,18 +180,18 @@ class ComposerWindow(Adw.ApplicationWindow):
     
     def _on_scan_error(self, scanner, error_message):
         """Handle scan error"""
-        print(f"Scan error: {error_message}")
+        self.logger.error(f"Scan error: {error_message}")
         self.library_view.set_scanning_state(False)
         self.library_view.subtitle_label.set_text(f"Error scanning directory: {error_message}")
     
     def _on_lyrics_downloaded(self, library_view, music_file_path, lrc_path):
         """Handle successful lyrics download"""
-        print(f"Lyrics downloaded for {music_file_path}: {lrc_path}")
+        # Logging is handled by auto-download handler to avoid duplicates
         # TODO: Show toast notification
     
     def _on_lyrics_error(self, library_view, music_file_path, error_message):
         """Handle lyrics download error"""
-        print(f"Lyrics error for {music_file_path}: {error_message}")
+        self.logger.error(f"Lyrics error for {music_file_path}: {error_message}")
         # TODO: Show toast notification
     
     def _start_auto_download(self):
@@ -247,7 +251,7 @@ class ComposerWindow(Adw.ApplicationWindow):
     
     def _on_auto_download_error(self, service, music_file_path, error_message):
         """Handle error in auto-download"""
-        print(f"Auto-download error for {music_file_path}: {error_message}")
+        self.logger.error(f"Auto-download error for {music_file_path}: {error_message}")
         self.auto_download_completed += 1
         self.library_view.set_auto_download_state(True, self.auto_download_completed, self.auto_download_total)
         

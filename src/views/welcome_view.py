@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Adw, Gtk, GObject
+from ..services.logger_service import get_logger
 
 class WelcomeView(Gtk.Box):
     """Welcome screen with directory chooser"""
@@ -30,6 +31,7 @@ class WelcomeView(Gtk.Box):
     
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
+        self.logger = get_logger('welcome_view')
         self.set_vexpand(True)
         self.set_hexpand(True)
         self.set_valign(Gtk.Align.CENTER)
@@ -110,7 +112,7 @@ class WelcomeView(Gtk.Box):
                     folder_path = folder.get_path()
                     self.emit('directory-selected', folder_path)
             except Exception as e:
-                print(f"Error selecting folder: {e}")
+                self.logger.error(f"Error selecting folder: {e}")
         
         # Get the toplevel window
         toplevel = self.get_root()

@@ -90,8 +90,7 @@ class FileService:
             # Create backup if file exists and backup is requested
             if create_backup and os.path.exists(lrc_path):
                 backup_path = FileService.backup_existing_file(lrc_path)
-                if backup_path:
-                    logger.info(f"Created backup: {backup_path}")
+                # backup_existing_file already logs the backup creation
             
             # Ensure directory exists
             os.makedirs(os.path.dirname(lrc_path), exist_ok=True)
@@ -154,7 +153,7 @@ class FileService:
                 return True
             return False
         except Exception as e:
-            print(f"Error deleting LRC file {lrc_path}: {e}")
+            FileService._get_logger().error(f"Error deleting LRC file {lrc_path}: {e}")
             return False
     
     @staticmethod
@@ -168,7 +167,7 @@ class FileService:
                     return f.read()
             return None
         except Exception as e:
-            print(f"Error reading LRC file {lrc_path}: {e}")
+            FileService._get_logger().error(f"Error reading LRC file {lrc_path}: {e}")
             return None
     
     @staticmethod 
