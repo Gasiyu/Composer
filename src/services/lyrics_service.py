@@ -100,13 +100,10 @@ class LyricsService(GObject.Object):
                 
                 # Add other sources here in the future
             
-            # Remove duplicates and sort by accuracy
-            unique_results = self._remove_duplicates(results)
-            unique_results.sort(key=lambda x: x.accuracy_score, reverse=True)
+            self.logger.info(f"Search completed: found {len(results)} results for '{title}' by '{artist}'")
             
-            self.logger.info(f"Search completed: found {len(unique_results)} unique results for '{title}' by '{artist}'")
             # Emit results
-            GLib.idle_add(self._emit_search_completed, unique_results, callback)
+            GLib.idle_add(self._emit_search_completed, results, callback)
             
         except Exception as e:
             error_msg = f"Search error for {artist} - {title}: {str(e)}"
@@ -124,19 +121,6 @@ class LyricsService(GObject.Object):
         self.emit('search-completed', results)
         if callback:
             callback(results)
-    
-    def _remove_duplicates(self, results: List[LyricsResult]) -> List[LyricsResult]:
-        """Remove duplicate results based on title and artist"""
-        seen = set()
-        unique_results = []
-        
-        for result in results:
-            key = (result.title.lower().strip(), result.artist.lower().strip())
-            if key not in seen:
-                seen.add(key)
-                unique_results.append(result)
-        
-        return unique_results
     
     def download_lyrics_async(self, music_file_path: str, lyrics_result: LyricsResult, 
                             callback: Optional[Callable] = None):
