@@ -57,8 +57,8 @@ class LyricsResult(GObject.Object):
         if self.duration <= 0:
             return "Unknown"
         
-        minutes = self.duration // 60
-        seconds = self.duration % 60
+        minutes = int(self.duration) // 60
+        seconds = int(self.duration) % 60
         return f"{minutes}:{seconds:02d}"
     
     def calculate_accuracy_score(self, target_title, target_artist, target_album="", target_duration=0):
