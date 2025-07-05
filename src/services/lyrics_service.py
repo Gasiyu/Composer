@@ -181,19 +181,43 @@ class LyricsService(GObject.Object):
                 romanization_mode=self.settings_service.get_romanization_mode()
             )
             
-            # Save to file using FileService
-            success = FileService.write_lrc_file(lrc_file_path, lrc_content, create_backup=True)
+            # Get storage method preference
+            storage_method = self.settings_service.get_lyrics_storage_method()
+            success = False
+            saved_paths = []
+            
+            # Save according to user preference
+            if storage_method in ["lrc", "both"]:
+                # Save to LRC file
+                lrc_success = FileService.write_lrc_file(lrc_file_path, lrc_content, create_backup=True)
+                if lrc_success:
+                    success = True
+                    saved_paths.append(lrc_file_path)
+                    self.logger.info(f"Successfully saved lyrics to LRC file: {lrc_file_path}")
+                else:
+                    self.logger.error(f"Failed to write LRC file: {lrc_file_path}")
+            
+            if storage_method in ["metadata", "both"]:
+                # Save to music file metadata
+                metadata_success = self._save_lyrics_to_metadata(music_file_path, lrc_content)
+                if metadata_success:
+                    success = True
+                    saved_paths.append(f"{music_file_path} (metadata)")
+                    self.logger.info(f"Successfully saved lyrics to metadata: {music_file_path}")
+                else:
+                    self.logger.error(f"Failed to write lyrics to metadata: {music_file_path}")
             
             if success:
-                self.logger.info(f"Successfully saved lyrics to: {lrc_file_path}")
+                saved_location = " and ".join(saved_paths)
+                self.logger.info(f"Successfully saved lyrics to: {saved_location}")
                 # Emit download completed signal
-                GLib.idle_add(self.emit, 'download-completed', music_file_path, lrc_file_path)
+                GLib.idle_add(self.emit, 'download-completed', music_file_path, saved_location)
                 
                 if callback:
-                    GLib.idle_add(callback, lrc_file_path)
+                    GLib.idle_add(callback, saved_location)
             else:
-                error_msg = "Failed to write LRC file"
-                self.logger.error(f"Failed to write LRC file: {lrc_file_path}")
+                error_msg = f"Failed to save lyrics using method: {storage_method}"
+                self.logger.error(error_msg)
                 GLib.idle_add(self.emit, 'download-error', music_file_path, error_msg)
                 
         except Exception as e:
@@ -204,6 +228,48 @@ class LyricsService(GObject.Object):
     def _get_lrc_file_path(self, music_file_path: str) -> str:
         """Get LRC file path for a music file"""
         return FileService.get_lrc_file_path(music_file_path)
+    
+    def _save_lyrics_to_metadata(self, music_file_path: str, lyrics_content: str) -> bool:
+        """
+        Save lyrics to music file metadata
+        
+        Args:
+            music_file_path: Path to the music file
+            lyrics_content: Lyrics content to save
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            from mutagen import File
+            
+            # Load the music file
+            audiofile = File(music_file_path)
+            if audiofile is None:
+                self.logger.error(f"Could not load music file: {music_file_path}")
+                return False
+            
+            # Save lyrics to appropriate metadata field based on file type
+            if audiofile.mime[0] == "audio/mpeg":  # MP3
+                audiofile["USLT::eng"] = lyrics_content
+            elif audiofile.mime[0] == "audio/mp4":  # M4A/MP4
+                audiofile["\xa9lyr"] = lyrics_content
+            elif audiofile.mime[0] == "audio/flac":  # FLAC
+                audiofile["LYRICS"] = lyrics_content
+            elif audiofile.mime[0] == "audio/ogg":  # OGG
+                audiofile["LYRICS"] = lyrics_content
+            else:
+                # Generic approach for other formats
+                audiofile["LYRICS"] = lyrics_content
+            
+            # Save the changes
+            audiofile.save()
+            self.logger.debug(f"Successfully saved lyrics to metadata: {music_file_path}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to save lyrics to metadata: {e}")
+            return False
     
     def cancel_all_searches(self):
         """Cancel all ongoing searches"""

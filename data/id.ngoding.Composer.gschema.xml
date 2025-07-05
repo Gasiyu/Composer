@@ -21,6 +21,11 @@
 			<summary>Preferred lyrics language</summary>
 			<description>Preferred language for lyrics downloads</description>
 		</key>
+		<key name="lyrics-storage-method" type="s">
+			<default>"lrc"</default>
+			<summary>Lyrics storage method</summary>
+			<description>How to store downloaded lyrics: 'lrc', 'metadata', or 'both'</description>
+		</key>
 		<key name="enable-romanization" type="b">
 			<default>false</default>
 			<summary>Enable lyrics romanization</summary>

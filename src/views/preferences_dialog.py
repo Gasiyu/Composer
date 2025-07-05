@@ -62,6 +62,26 @@ class PreferencesDialog(Adw.PreferencesDialog):
         overwrite_row.connect('notify::active', self._on_overwrite_changed)
         general_group.add(overwrite_row)
         
+        # Lyrics storage preference
+        storage_row = Adw.ComboRow()
+        storage_row.set_title("Lyrics storage")
+        storage_row.set_subtitle("How to store downloaded lyrics")
+        
+        # Storage options
+        storage_model = Gtk.StringList()
+        storage_model.append("LRC")
+        storage_model.append("Song Metadata")
+        storage_model.append("Both")
+        
+        storage_row.set_model(storage_model)
+        
+        # Set current storage method
+        current_storage = self.settings_service.get_lyrics_storage_method()
+        storage_map = {"lrc": 0, "metadata": 1, "both": 2}
+        storage_row.set_selected(storage_map.get(current_storage, 0))
+        storage_row.connect('notify::selected', self._on_storage_method_changed)
+        general_group.add(storage_row)
+        
         # Language preference
         language_row = Adw.ComboRow()
         language_row.set_title("Preferred language")
@@ -203,6 +223,13 @@ class PreferencesDialog(Adw.PreferencesDialog):
         language_codes = ["en", "es", "fr", "de", "it", "pt", "ja", "ko", "zh"]
         if selected < len(language_codes):
             self.settings_service.set_lyrics_language(language_codes[selected])
+    
+    def _on_storage_method_changed(self, combo, param):
+        """Handle lyrics storage method setting change"""
+        selected = combo.get_selected()
+        storage_methods = ["lrc", "metadata", "both"]
+        if selected < len(storage_methods):
+            self.settings_service.set_lyrics_storage_method(storage_methods[selected])
     
     def _on_enable_romanization_changed(self, switch, param):
         """Handle enable romanization setting change"""

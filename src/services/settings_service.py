@@ -142,6 +142,27 @@ class SettingsService(GObject.Object):
         except Exception as e:
             print(f"Error setting lyrics-language: {e}")
     
+    def get_lyrics_storage_method(self) -> str:
+        """Get preferred lyrics storage method"""
+        if not self.settings:
+            return "lrc"
+        
+        try:
+            return self.settings.get_string('lyrics-storage-method')
+        except Exception as e:
+            print(f"Error reading lyrics-storage-method setting: {e}")
+            return "lrc"
+    
+    def set_lyrics_storage_method(self, method: str):
+        """Set preferred lyrics storage method"""
+        if not self.settings:
+            return
+        
+        try:
+            self.settings.set_string('lyrics-storage-method', method)
+        except Exception as e:
+            print(f"Error setting lyrics-storage-method: {e}")
+    
     def get_enable_romanization(self) -> bool:
         """Get whether romanization is enabled"""
         if not self.settings:
@@ -257,6 +278,7 @@ class SettingsService(GObject.Object):
             self.settings.reset('auto-download-lyrics')
             self.settings.reset('overwrite-existing-lyrics')
             self.settings.reset('lyrics-language')
+            self.settings.reset('lyrics-storage-method')
             self.settings.reset('enable-romanization')
             self.settings.reset('romanize-chinese')
             self.settings.reset('romanize-japanese')
