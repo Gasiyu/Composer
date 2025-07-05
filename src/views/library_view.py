@@ -372,13 +372,19 @@ class LibraryView(Gtk.Box):
         dialog = LyricsSelectionDialog(
             music_file=music_file,
             lyrics_results=results,
-            callback=lambda selected_result: self._download_lyrics(music_file, selected_result)
+            callback=lambda selected_result: self._download_lyrics(music_file, selected_result),
+            cancel_callback=lambda: self._on_lyrics_selection_cancelled(music_file)
         )
         
         # Present dialog with proper parent
         toplevel = self.get_root()
         if toplevel:
             dialog.present(toplevel)
+    
+    def _on_lyrics_selection_cancelled(self, music_file):
+        """Handle lyrics selection dialog cancellation"""
+        # Reset download button state to idle
+        self._set_download_button_state(music_file['path'], 'idle')
     
     def _on_lyrics_saved(self, music_file_path, lrc_path):
         """Handle successful lyrics save"""
@@ -398,7 +404,7 @@ class LibraryView(Gtk.Box):
                 button.set_icon_name('view-refresh-symbolic')
                 button.set_tooltip_text('Re-download Lyrics')
             else:
-                button.set_icon_name('cloud-download-symbolic')
+                button.set_icon_name('folder-download-symbolic')
                 button.set_tooltip_text('Download Lyrics')
             button.set_sensitive(True)
             button.remove_css_class('success')

@@ -27,12 +27,13 @@ class LyricsSelectionDialog(Adw.Dialog):
     __gtype_name__ = 'LyricsSelectionDialog'
     
     def __init__(self, music_file: dict, lyrics_results: List[LyricsResult], 
-                 callback: Optional[Callable] = None):
+                 callback: Optional[Callable] = None, cancel_callback: Optional[Callable] = None):
         super().__init__()
         
         self.music_file = music_file
         self.lyrics_results = lyrics_results
         self.callback = callback
+        self.cancel_callback = cancel_callback
         self.selected_result = None
         
         self.set_title("Choose Lyrics")
@@ -259,6 +260,8 @@ class LyricsSelectionDialog(Adw.Dialog):
     
     def _on_cancel_clicked(self, button):
         """Handle cancel button click"""
+        if self.cancel_callback:
+            self.cancel_callback()
         self.close()
     
     def _on_download_clicked(self, button):
