@@ -106,7 +106,6 @@ class RomanizationService(GObject.Object):
             # Use lazy_pinyin with tone marks for better pronunciation guidance
             pinyin_list = lazy_pinyin(text, style=Style.TONE, strict=False)
             romanized = ' '.join(pinyin_list)
-            self.logger.debug(f"Chinese romanization: '{text}' -> '{romanized}'")
             return romanized
         except Exception as e:
             self.logger.error(f"Chinese romanization failed: {e}")
@@ -131,7 +130,6 @@ class RomanizationService(GObject.Object):
         
         try:
             romanized = self.japanese_romanizer.do(text)
-            self.logger.debug(f"Japanese romanization: '{text}' -> '{romanized}'")
             return romanized
         except Exception as e:
             self.logger.error(f"Japanese romanization failed: {e}")
@@ -157,7 +155,6 @@ class RomanizationService(GObject.Object):
         try:
             romanizer = Romanizer(text)
             romanized = romanizer.romanize()
-            self.logger.debug(f"Korean romanization: '{text}' -> '{romanized}'")
             return romanized
         except Exception as e:
             self.logger.error(f"Korean romanization failed: {e}")
