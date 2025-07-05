@@ -188,8 +188,11 @@ class LyricsService(GObject.Object):
             
             # Save according to user preference
             if storage_method in ["lrc", "both"]:
+                # Process empty lines before saving to LRC file
+                processed_lrc_content = FileService.process_empty_lrc_lines(lrc_content)
+                
                 # Save to LRC file
-                lrc_success = FileService.write_lrc_file(lrc_file_path, lrc_content, create_backup=True)
+                lrc_success = FileService.write_lrc_file(lrc_file_path, processed_lrc_content, create_backup=True)
                 if lrc_success:
                     success = True
                     saved_paths.append(lrc_file_path)

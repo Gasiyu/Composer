@@ -228,9 +228,14 @@ class RomanizationService(GObject.Object):
             timing_prefix = timing_match.group(1) if timing_match else ""
             text_part = line[len(timing_prefix):] if timing_prefix else line
             
-            # Skip empty lines or lines with only timing
+            # Handle empty lines or lines with only timing
             if not text_part.strip():
-                result_lines.append(original_line)
+                if timing_prefix:
+                    # Replace empty LRC line with musical note emoji
+                    result_lines.append(timing_prefix + " 🎶🎶🎶")
+                else:
+                    # Keep empty lines as-is for non-LRC content
+                    result_lines.append(original_line)
                 continue
             
             # Romanize the text part
