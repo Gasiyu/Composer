@@ -248,15 +248,7 @@ class LyricsSelectionDialog(Adw.Dialog):
         lyrics_text = self.selected_result.synced_lyrics if self.selected_result.has_synced_lyrics() else self.selected_result.plain_lyrics
         
         if lyrics_text:
-            # Clean up LRC timestamps for display
-            if self.selected_result.has_synced_lyrics():
-                import re
-                # Remove LRC timestamps for preview
-                clean_text = re.sub(r'\[\d{2}:\d{2}\.\d{2}\]', '', lyrics_text)
-                clean_text = '\n'.join(line.strip() for line in clean_text.split('\n') if line.strip())
-                buffer.set_text(clean_text)
-            else:
-                buffer.set_text(lyrics_text)
+            buffer.set_text(lyrics_text)
         else:
             buffer.set_text("No lyrics preview available")
     
