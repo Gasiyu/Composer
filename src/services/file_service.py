@@ -169,33 +169,3 @@ class FileService:
         except Exception as e:
             FileService._get_logger().error(f"Error reading LRC file {lrc_path}: {e}")
             return None
-    
-    @staticmethod 
-    def process_empty_lrc_lines(lrc_content: str) -> str:
-        """
-        Process LRC content to replace empty timed lines with musical note emoji
-        
-        Args:
-            lrc_content: LRC content to process
-            
-        Returns:
-            Processed LRC content with empty lines replaced
-        """
-        if not lrc_content:
-            return lrc_content
-            
-        import re
-        
-        lines = lrc_content.split('\n')
-        processed_lines = []
-        
-        for line in lines:
-            # Check if line has LRC timing but empty content
-            timing_match = re.match(r'^(\[[\d:.]+\])\s*$', line)
-            if timing_match:
-                # Replace empty LRC line with musical note
-                processed_lines.append(timing_match.group(1) + " 🎶🎶🎶")
-            else:
-                processed_lines.append(line)
-        
-        return '\n'.join(processed_lines)
