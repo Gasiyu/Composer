@@ -162,6 +162,9 @@ class SettingsService(GObject.Object):
         
         try:
             self.settings.set_string('lyrics-storage-method', method)
+            # Invalidate FileService cache when storage method changes
+            from .file_service import FileService
+            FileService._invalidate_cache()
         except Exception as e:
             self.logger.error(f"Error setting lyrics-storage-method: {e}")
     

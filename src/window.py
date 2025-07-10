@@ -158,7 +158,7 @@ class ComposerWindow(Adw.ApplicationWindow):
             
             # If overwrite is disabled, skip files that already have lyrics
             if not self.settings_service.get_overwrite_existing_lyrics():
-                if FileService.lrc_file_exists(music_file['path']):
+                if FileService.lyrics_exist(music_file['path']):
                     should_download = False
             
             if should_download:

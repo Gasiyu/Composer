@@ -17,7 +17,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Adw, Gtk, GObject
+from gi.repository import Adw, Gtk, GObject, GLib
+import threading
 from ..services.lyrics_service import LyricsService
 from ..services.settings_service import SettingsService
 from ..services.file_service import FileService
@@ -189,12 +190,13 @@ class LibraryView(Gtk.Box):
             self.progress_bar.set_text(f'Scanned {processed} of {total} files')
     
     def add_music_file(self, music_file):
-        """Add a single music file to the list"""
+        """Add a single music file to the list (without immediate refresh)"""
         self.music_files.append(music_file)
-        self._refresh_music_list()
+        # Don't refresh immediately during scanning to avoid UI freezes
+        # _refresh_music_list() will be called after scan completion
     
     def _refresh_music_list(self):
-        """Refresh the music list with proper sorting"""
+        """Refresh the music list with proper sorting (asynchronous lyrics checking)"""
         # Clear current list
         while True:
             row = self.music_list.get_first_child()
@@ -205,23 +207,65 @@ class LibraryView(Gtk.Box):
         # Clear download states
         self.download_states.clear()
         
-        # Sort music files: files without lyrics first, then files with lyrics
-        sorted_files = sorted(self.music_files, key=lambda f: FileService.lrc_file_exists(f['path']))
+        if not self.music_files:
+            return
         
-        # Add rows for sorted files
-        for music_file in sorted_files:
-            row = self._create_music_row(music_file)
-            self.music_list.append(row)
+        # Show loading state for lyrics checking
+        self.subtitle_label.set_text("Checking lyrics availability...")
+        
+        # Perform lyrics checking in a background thread to avoid UI freezes
+        def check_lyrics_background():
+            try:
+                file_paths = [f['path'] for f in self.music_files]
+                lyrics_status = FileService.lyrics_exist_bulk(file_paths)
+                
+                # Update UI on main thread
+                GLib.idle_add(self._populate_music_list, lyrics_status)
+            except Exception as e:
+                self.logger.error(f"Error checking lyrics: {e}")
+                # Fallback to empty status
+                lyrics_status = {path: False for path in file_paths}
+                GLib.idle_add(self._populate_music_list, lyrics_status)
+        
+        # Start background thread
+        thread = threading.Thread(target=check_lyrics_background, daemon=True)
+        thread.start()
+    
+    def _populate_music_list(self, lyrics_status):
+        """Populate the music list with lyrics status (called on main thread)"""
+        try:
+            # Sort music files: files without lyrics first, then files with lyrics
+            sorted_files = sorted(self.music_files, key=lambda f: lyrics_status.get(f['path'], False))
+            
+            # Add rows for sorted files with lyrics status
+            for music_file in sorted_files:
+                has_lyrics = lyrics_status.get(music_file['path'], False)
+                row = self._create_music_row_with_status(music_file, has_lyrics)
+                self.music_list.append(row)
+            
+            # Update subtitle to show completion
+            total_files = len(self.music_files)
+            if total_files == 1:
+                self.subtitle_label.set_text('1 song in your library')
+            else:
+                self.subtitle_label.set_text(f'{total_files} songs in your library')
+                
+        except Exception as e:
+            self.logger.error(f"Error populating music list: {e}")
+            self.subtitle_label.set_text("Error loading library")
+        
+        return False  # Don't repeat this idle callback
     
     def set_scan_completed(self, total_files):
         """Update UI when scan is completed"""
         self.set_scanning_state(False)
         if total_files == 0:
             self.subtitle_label.set_text('No music files found in this directory')
-        elif total_files == 1:
-            self.subtitle_label.set_text('1 song in your library')
         else:
-            self.subtitle_label.set_text(f'{total_files} songs in your library')
+            # The subtitle will be updated by _populate_music_list after lyrics checking
+            # Refresh the music list now that scanning is complete
+            # This will do async lyrics checking to avoid UI freezes
+            self._refresh_music_list()
     
     def clear_music_list(self):
         """Clear all music files from the list"""
@@ -234,7 +278,11 @@ class LibraryView(Gtk.Box):
             self.music_list.remove(row)
     
     def _create_music_row(self, music_file):
-        """Create a row for a music file"""
+        """Create a row for a music file (without lyrics status check)"""
+        return self._create_music_row_with_status(music_file, has_lyrics=None)
+    
+    def _create_music_row_with_status(self, music_file, has_lyrics=None):
+        """Create a row for a music file with optional lyrics status"""
         import html
         
         row = Adw.ActionRow()
@@ -262,8 +310,9 @@ class LibraryView(Gtk.Box):
         duration_label.set_valign(Gtk.Align.CENTER)
         suffix_box.append(duration_label)
         
-        # Check if lyrics already exist
-        has_lyrics = FileService.lrc_file_exists(music_file['path'])
+        # Check lyrics status if not provided
+        if has_lyrics is None:
+            has_lyrics = FileService.lyrics_exist(music_file['path'])
         
         # Apply dimmed styling if lyrics exist
         if has_lyrics:
@@ -397,7 +446,7 @@ class LibraryView(Gtk.Box):
             return
         
         button = self.download_states[music_file_path]
-        has_lyrics = FileService.lrc_file_exists(music_file_path)
+        has_lyrics = FileService.lyrics_exist(music_file_path)
         
         if state == 'idle':
             if has_lyrics:
@@ -481,7 +530,7 @@ class LibraryView(Gtk.Box):
         while child:
             if hasattr(child, 'music_file') and child.music_file['path'] == music_file_path:
                 # Update the row's appearance
-                has_lyrics = FileService.lrc_file_exists(music_file_path)
+                has_lyrics = FileService.lyrics_exist(music_file_path)
                 if has_lyrics:
                     child.add_css_class('dim-label')
                     child.set_opacity(0.6)
