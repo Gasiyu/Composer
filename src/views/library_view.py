@@ -45,6 +45,9 @@ class LibraryView(Gtk.Box):
         self.set_margin_end(24)
         
         self.music_files = []
+        self.displayed_paths = set()  # Track displayed file paths to avoid duplicates
+        self.pending_files = []  # Queue for files to be added to UI
+        self.update_timer_id = None  # Timer for batched UI updates
         
         # Initialize services
         self.lyrics_service = LyricsService()
@@ -190,87 +193,170 @@ class LibraryView(Gtk.Box):
             self.progress_bar.set_text(f'Scanned {processed} of {total} files')
     
     def add_music_file(self, music_file):
-        """Add a single music file to the list (without immediate refresh)"""
+        """Add a single music file to the list with progressive display"""
+        # Add to internal list
         self.music_files.append(music_file)
-        # Don't refresh immediately during scanning to avoid UI freezes
-        # _refresh_music_list() will be called after scan completion
+        
+        # Skip if already displayed (shouldn't happen but be safe)
+        if music_file['path'] in self.displayed_paths:
+            return
+        
+        # Add to pending files for batched processing
+        self.pending_files.append(music_file)
+        
+        # Schedule UI update if not already scheduled
+        if self.update_timer_id is None:
+            # Use a short delay to batch multiple file additions
+            self.update_timer_id = GLib.timeout_add(50, self._process_pending_files)
     
-    def _refresh_music_list(self):
-        """Refresh the music list with proper sorting (asynchronous lyrics checking)"""
-        # Clear current list
-        while True:
-            row = self.music_list.get_first_child()
-            if row is None:
-                break
-            self.music_list.remove(row)
+    def _process_pending_files(self):
+        """Process pending files and add them to the UI"""
+        if not self.pending_files:
+            self.update_timer_id = None
+            return False  # Remove the timer
         
-        # Clear download states
-        self.download_states.clear()
+        # Process up to 10 files at a time to avoid UI freezes
+        batch_size = min(10, len(self.pending_files))
+        files_to_process = self.pending_files[:batch_size]
+        self.pending_files = self.pending_files[batch_size:]
         
+        for music_file in files_to_process:
+            if music_file['path'] not in self.displayed_paths:
+                # Create and add row immediately (without lyrics check for speed)
+                row = self._create_music_row(music_file)
+                self.music_list.append(row)
+                self.displayed_paths.add(music_file['path'])
+                
+                # Update subtitle to show current count
+                current_count = len(self.displayed_paths)
+                if current_count == 1:
+                    self.subtitle_label.set_text(f'Found {current_count} song (scanning...)')
+                else:
+                    self.subtitle_label.set_text(f'Found {current_count} songs (scanning...)')
+        
+        # Continue processing if there are more files
+        if self.pending_files:
+            return True  # Keep the timer running
+        else:
+            self.update_timer_id = None
+            return False  # Remove the timer
+    
+    def _refresh_music_list_async(self):
+        """Asynchronously refresh the music list with proper sorting and lyrics checking"""
         if not self.music_files:
             return
         
-        # Show loading state for lyrics checking
+        # Show that we're checking lyrics
         self.subtitle_label.set_text("Checking lyrics availability...")
         
-        # Perform lyrics checking in a background thread to avoid UI freezes
+        # Perform lyrics checking in a background thread
         def check_lyrics_background():
             try:
                 file_paths = [f['path'] for f in self.music_files]
                 lyrics_status = FileService.lyrics_exist_bulk(file_paths)
                 
                 # Update UI on main thread
-                GLib.idle_add(self._populate_music_list, lyrics_status)
+                GLib.idle_add(self._update_rows_with_lyrics_status, lyrics_status)
             except Exception as e:
                 self.logger.error(f"Error checking lyrics: {e}")
-                # Fallback to empty status
-                lyrics_status = {path: False for path in file_paths}
-                GLib.idle_add(self._populate_music_list, lyrics_status)
+                # Fallback to individual checks
+                lyrics_status = {}
+                for f in self.music_files:
+                    try:
+                        lyrics_status[f['path']] = FileService.lyrics_exist(f['path'])
+                    except:
+                        lyrics_status[f['path']] = False
+                GLib.idle_add(self._update_rows_with_lyrics_status, lyrics_status)
         
         # Start background thread
         thread = threading.Thread(target=check_lyrics_background, daemon=True)
         thread.start()
     
-    def _populate_music_list(self, lyrics_status):
-        """Populate the music list with lyrics status (called on main thread)"""
+    def _update_rows_with_lyrics_status(self, lyrics_status):
+        """Update existing rows with lyrics status and reorder them"""
         try:
-            # Sort music files: files without lyrics first, then files with lyrics
-            sorted_files = sorted(self.music_files, key=lambda f: lyrics_status.get(f['path'], False))
+            # Collect all current rows with their music files
+            rows_data = []
+            child = self.music_list.get_first_child()
             
-            # Add rows for sorted files with lyrics status
-            for music_file in sorted_files:
-                has_lyrics = lyrics_status.get(music_file['path'], False)
-                row = self._create_music_row_with_status(music_file, has_lyrics)
-                self.music_list.append(row)
+            while child:
+                if hasattr(child, 'music_file'):
+                    music_file = child.music_file
+                    has_lyrics = lyrics_status.get(music_file['path'], False)
+                    rows_data.append((music_file, has_lyrics, child))
+                child = child.get_next_sibling()
             
-            # Update subtitle to show completion
+            # Sort: files without lyrics first, then files with lyrics
+            rows_data.sort(key=lambda x: x[1])  # Sort by has_lyrics (False first)
+            
+            # Remove all rows from the list
+            while True:
+                row = self.music_list.get_first_child()
+                if row is None:
+                    break
+                self.music_list.remove(row)
+            
+            # Re-add rows in sorted order with updated styling
+            for music_file, has_lyrics, old_row in rows_data:
+                # Create new row with proper lyrics status
+                new_row = self._create_music_row_with_status(music_file, has_lyrics)
+                self.music_list.append(new_row)
+            
+            # Update subtitle
+            total_files = len(self.music_files)
+            files_with_lyrics = sum(1 for _, has_lyrics, _ in rows_data if has_lyrics)
+            
+            if total_files == 1:
+                self.subtitle_label.set_text('1 song in your library')
+            else:
+                if files_with_lyrics > 0:
+                    self.subtitle_label.set_text(f'{total_files} songs in your library ({files_with_lyrics} with lyrics)')
+                else:
+                    self.subtitle_label.set_text(f'{total_files} songs in your library')
+                
+        except Exception as e:
+            self.logger.error(f"Error updating rows with lyrics status: {e}")
+            # Fallback to simple count
             total_files = len(self.music_files)
             if total_files == 1:
                 self.subtitle_label.set_text('1 song in your library')
             else:
                 self.subtitle_label.set_text(f'{total_files} songs in your library')
-                
-        except Exception as e:
-            self.logger.error(f"Error populating music list: {e}")
-            self.subtitle_label.set_text("Error loading library")
         
         return False  # Don't repeat this idle callback
     
     def set_scan_completed(self, total_files):
         """Update UI when scan is completed"""
         self.set_scanning_state(False)
+        
+        # Cancel any pending timer
+        if self.update_timer_id is not None:
+            GLib.source_remove(self.update_timer_id)
+            self.update_timer_id = None
+        
+        # Process any remaining pending files
+        if self.pending_files:
+            self._process_pending_files()
+        
         if total_files == 0:
             self.subtitle_label.set_text('No music files found in this directory')
         else:
-            # The subtitle will be updated by _populate_music_list after lyrics checking
-            # Refresh the music list now that scanning is complete
-            # This will do async lyrics checking to avoid UI freezes
-            self._refresh_music_list()
+            # Start asynchronous lyrics checking and sorting
+            self._refresh_music_list_async()
     
     def clear_music_list(self):
         """Clear all music files from the list"""
         self.music_files = []
+        self.displayed_paths.clear()
+        self.pending_files.clear()
         self.download_states.clear()
+        
+        # Cancel any pending timer
+        if self.update_timer_id is not None:
+            GLib.source_remove(self.update_timer_id)
+            self.update_timer_id = None
+        
+        # Clear the UI list
         while True:
             row = self.music_list.get_first_child()
             if row is None:
@@ -471,7 +557,7 @@ class LibraryView(Gtk.Box):
             button.add_css_class('success')
             button.remove_css_class('destructive-action')
             # Refresh the entire list to update sorting and styling
-            self._refresh_music_list()
+            self._refresh_music_list_async()
         elif state == 'error':
             if has_lyrics:
                 button.set_icon_name('view-refresh-symbolic')
