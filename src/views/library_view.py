@@ -56,6 +56,7 @@ class LibraryView(Gtk.Box):
         
         # Track download states for each music file
         self.download_states = {}  # music_file_path -> download_button
+        self.persistent_button_states = {}  # music_file_path -> state (for preserving across refreshes)
         
         # Connect lyrics service signals
         self.lyrics_service.connect('search-completed', self._on_lyrics_search_completed)
@@ -275,6 +276,22 @@ class LibraryView(Gtk.Box):
     def _update_rows_with_lyrics_status(self, lyrics_status):
         """Update existing rows with lyrics status and reorder them"""
         try:
+            # Save current button states before recreating rows
+            current_button_states = {}
+            for path, button in self.download_states.items():
+                if button.has_css_class('destructive-action'):
+                    current_button_states[path] = 'error'
+                elif button.has_css_class('success'):
+                    current_button_states[path] = 'complete'
+                elif not button.get_sensitive():
+                    current_button_states[path] = 'downloading'
+                else:
+                    current_button_states[path] = 'idle'
+            
+            # Merge with persistent states (persistent states take precedence)
+            for path, state in self.persistent_button_states.items():
+                current_button_states[path] = state
+            
             # Collect all current rows with their music files
             rows_data = []
             child = self.music_list.get_first_child()
@@ -296,11 +313,20 @@ class LibraryView(Gtk.Box):
                     break
                 self.music_list.remove(row)
             
+            # Clear download states before recreating
+            self.download_states.clear()
+            
             # Re-add rows in sorted order with updated styling
             for music_file, has_lyrics, old_row in rows_data:
                 # Create new row with proper lyrics status
                 new_row = self._create_music_row_with_status(music_file, has_lyrics)
                 self.music_list.append(new_row)
+                
+                # Restore button state if it was saved
+                file_path = music_file['path']
+                if file_path in current_button_states:
+                    saved_state = current_button_states[file_path]
+                    self._set_download_button_state(file_path, saved_state, skip_refresh=True)
             
             # Update subtitle
             total_files = len(self.music_files)
@@ -350,6 +376,7 @@ class LibraryView(Gtk.Box):
         self.displayed_paths.clear()
         self.pending_files.clear()
         self.download_states.clear()
+        self.persistent_button_states.clear()
         
         # Cancel any pending timer
         if self.update_timer_id is not None:
@@ -526,13 +553,23 @@ class LibraryView(Gtk.Box):
         self._set_download_button_state(music_file_path, 'complete')
         self.emit('lyrics-downloaded', music_file_path, lrc_path)
     
-    def _set_download_button_state(self, music_file_path, state):
+    def _set_download_button_state(self, music_file_path, state, skip_refresh=False):
         """Update download button state"""
         if music_file_path not in self.download_states:
             return
         
         button = self.download_states[music_file_path]
         has_lyrics = FileService.lyrics_exist(music_file_path)
+        
+        # Store persistent state for error conditions to preserve across refreshes
+        if state == 'error':
+            self.persistent_button_states[music_file_path] = 'error'
+        elif state == 'complete':
+            # Clear any persistent error state when successfully completed
+            self.persistent_button_states.pop(music_file_path, None)
+        elif state == 'idle':
+            # Clear persistent state when manually reset to idle
+            self.persistent_button_states.pop(music_file_path, None)
         
         if state == 'idle':
             if has_lyrics:
@@ -556,8 +593,9 @@ class LibraryView(Gtk.Box):
             button.set_sensitive(True)
             button.add_css_class('success')
             button.remove_css_class('destructive-action')
-            # Refresh the entire list to update sorting and styling
-            self._refresh_music_list_async()
+            # Only refresh if not skipping (to avoid infinite loops during refresh)
+            if not skip_refresh:
+                self._refresh_music_list_async()
         elif state == 'error':
             if has_lyrics:
                 button.set_icon_name('view-refresh-symbolic')
@@ -624,7 +662,8 @@ class LibraryView(Gtk.Box):
                     child.remove_css_class('dim-label')
                     child.set_opacity(1.0)
                 
-                # Update download button
-                self._set_download_button_state(music_file_path, 'idle')
+                # Only reset to idle if there's no persistent error state
+                if music_file_path not in self.persistent_button_states:
+                    self._set_download_button_state(music_file_path, 'idle')
                 break
             child = child.get_next_sibling()
